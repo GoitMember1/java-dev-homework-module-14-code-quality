@@ -2,89 +2,114 @@ import java.util.Scanner;
 
 public class App {
 
+    private static final int BOARD_SIZE = 9;
+    private static final char EMPTY_CELL = ' ';
+    private static final char PLAYER_SYMBOL = 'X';
+    private static final char COMPUTER_SYMBOL = 'O';
+
+    private static Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
-        Scanner scan = new Scanner(System.in);
-        byte input;
-        byte rand;
-        byte i;
-        boolean boxAvailable = false;
-        byte winner = 0;
-        char box[] = { '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        char[] board = initializeBoard();
+        boolean isPlayerTurn = true;
+        char winner = '\0';
+
         System.out.println("Enter box number to select. Enjoy!\n");
 
-        boolean boxEmpty = false;
-        while (true) {
-            System.out.println("\n\n " + box[0] + " | " + box[1] + " | " + box[2] + " ");
-            System.out.println("-----------");
-            System.out.println(" " + box[3] + " | " + box[4] + " | " + box[5] + " ");
-            System.out.println("-----------");
-            System.out.println(" " + box[6] + " | " + box[7] + " | " + box[8] + " \n");
-            if(!boxEmpty){
-                for(i = 0; i < 9; i++)
-                    box[i] = ' ';
-                boxEmpty = true;
-            }
+        while (winner == '\0') {
+            printBoard(board);
 
-            if(winner == 1){
-                System.out.println("You won the game!\nCreated by Shreyas Saha. Thanks for playing!");
-                break;
-            } else if(winner == 2){
-                System.out.println("You lost the game!\nCreated by Shreyas Saha. Thanks for playing!");
-                break;
-            } else if(winner == 3){
-                System.out.println("It's a draw!\nCreated by Shreyas Saha. Thanks for playing!");
-                break;
-            }
+            int move = getPlayerMove(board);
+            board[move] = PLAYER_SYMBOL;
+            isPlayerTurn = false;
 
-            while (true) {
-                input = scan.nextByte();
-                if (input > 0 && input < 10) {
-                    if (box[input - 1] == 'X' || box[input - 1] == 'O')
-                        System.out.println("That one is already in use. Enter another.");
-                    else {
-                        box[input - 1] = 'X';
-                        break;
-                    }
-                }
-                else
-                    System.out.println("Invalid input. Enter again.");
-            }
+            winner = checkWinner(board);
+            if (winner != '\0') break;
 
-            if((box[0]=='X' && box[1]=='X' && box[2]=='X') || (box[3]=='X' && box[4]=='X' && box[5]=='X') || (box[6]=='X' && box[7]=='X' && box[8]=='X') ||
-               (box[0]=='X' && box[3]=='X' && box[6]=='X') || (box[1]=='X' && box[4]=='X' && box[7]=='X') || (box[2]=='X' && box[5]=='X' && box[8]=='X') ||
-               (box[0]=='X' && box[4]=='X' && box[8]=='X') || (box[2]=='X' && box[4]=='X' && box[6]=='X')){
-                   winner = 1;
-                   continue;
-            }
+            move = getComputerMove(board);
+            board[move] = COMPUTER_SYMBOL;
+            isPlayerTurn = true;
 
-            boxAvailable = false;
-            for(i=0; i<9; i++){
-                if(box[i] != 'X' && box[i] != 'O'){
-                    boxAvailable = true;
-                    break;
-                }
-            }
-
-            if(boxAvailable == false){
-                winner = 3;
-                continue;
-            }
-
-            while (true) {
-                rand = (byte) (Math.random() * (9 - 1 + 1) + 1);
-                if (box[rand - 1] != 'X' && box[rand - 1] != 'O') {
-                    box[rand - 1] = 'O';
-                    break;
-                }
-            }
-
-            if((box[0]=='O' && box[1]=='O' && box[2]=='O') || (box[3]=='O' && box[4]=='O' && box[5]=='O') || (box[6]=='O' && box[7]=='O' && box[8]=='O') ||
-               (box[0]=='O' && box[3]=='O' && box[6]=='O') || (box[1]=='O' && box[4]=='O' && box[7]=='O') || (box[2]=='O' && box[5]=='O' && box[8]=='O') ||
-               (box[0]=='O' && box[4]=='O' && box[8]=='O') || (box[2]=='O' && box[4]=='O' && box[6]=='O')){
-                winner = 2;
-                continue;
-            }
+            winner = checkWinner(board);
         }
 
+        printBoard(board);
+        printResult(winner);
+    }
+
+    private static char[] initializeBoard() {
+        char[] board = new char[BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            board[i] = EMPTY_CELL;
+        }
+        return board;
+    }
+
+    private static void printBoard(char[] board) {
+        System.out.println("\n");
+        for (int i = 0; i < 9; i += 3) {
+            System.out.println(" " + board[i] + " | " + board[i + 1] + " | " + board[i + 2] + " ");
+            if (i < 6) System.out.println("-----------");
+        }
+        System.out.println("\n");
+    }
+
+    private static int getPlayerMove(char[] board) {
+        int move;
+        while (true) {
+            System.out.print("Enter your move (1-9): ");
+            move = scanner.nextInt() - 1;
+            if (move >= 0 && move < BOARD_SIZE && board[move] == EMPTY_CELL) {
+                break;
+            } else {
+                System.out.println("Invalid input. Enter again.");
+            }
+        }
+        return move;
+    }
+
+    private static int getComputerMove(char[] board) {
+        int move;
+        do {
+            move = (int) (Math.random() * BOARD_SIZE);
+        } while (board[move] != EMPTY_CELL);
+        return move;
+    }
+
+    private static char checkWinner(char[] board) {
+        // Check rows
+        for (int i = 0; i < 9; i += 3) {
+            if (board[i] == board[i + 1] && board[i + 1] == board[i + 2] && board[i] != EMPTY_CELL) {
+                return board[i];
+            }
+        }
+        // Check columns
+        for (int i = 0; i < 3; i++) {
+            if (board[i] == board[i + 3] && board[i + 3] == board[i + 6] && board[i] != EMPTY_CELL) {
+                return board[i];
+            }
+        }
+        // Check diagonals
+        if ((board[0] == board[4] && board[4] == board[8] && board[0] != EMPTY_CELL) ||
+                (board[2] == board[4] && board[4] == board[6] && board[2] != EMPTY_CELL)) {
+            return board[4];
+        }
+        // Check for draw
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            if (board[i] == EMPTY_CELL) {
+                return '\0';
+            }
+        }
+        return 'T'; // 'T' represents tie
+    }
+
+    private static void printResult(char winner) {
+        if (winner == PLAYER_SYMBOL) {
+            System.out.println("You won the game!\nThanks for playing!");
+        } else if (winner == COMPUTER_SYMBOL) {
+            System.out.println("You lost the game!\nThanks for playing!");
+        } else if (winner == 'T') {
+            System.out.println("It's a draw!\nThanks for playing!");
+        }
     }
 }
